@@ -1,0 +1,66 @@
+{
+  "min_packer_version": "0.12.0",
+  "variables": {
+    "Docker_Version": "18.06.3.ce",
+    "destination_ami_name": "WIN2016-DOCKER-VS2019",
+    "source_ami_name": "WIN2016-BASE-MASTER-*"
+},
+"builders": [{
+    "ami_name": "{{user `destination_ami_name`}}-{{isotime \"20060102\"}}",
+    "ami_description": "Based on AMI - {{ .SourceAMIName }} - ({{ .SourceAMI }})",
+    "tags": {
+       "Name": "{{user `destination_ami_name`}}-{{isotime \"20060102\"}}"
+    },
+    "source_ami_filter": {
+		"filters": {
+			"virtualization-type": "hvm",
+			"name": "{{user `source_ami_name`}}",
+			"root-device-type": "ebs"
+		},
+		"owners": [ "self"],
+        "most_recent": true
+     },
+     "run_tags": {
+		"Name": "Packer Build - {{user `destination_ami_name`}}",
+		"Owner": "RTBuildTools"
+     },
+     "run_volume_tags": {
+       "Name": "Packer Build - {{user `destination_ami_name`}}"
+     },
+     "region": "us-east-1",
+     "name": "",
+     "profile": "",
+     "type": "amazon-ebs",
+     "launch_block_device_mappings": [{
+        "device_name": "/dev/sda1",
+        "volume_size": 100,
+        "volume_type": "gp2",
+         "delete_on_termination": true
+      }],
+     "force_deregister": true,
+     "force_delete_snapshot": true,
+     "instance_type": "t3.xlarge",
+     "iam_instance_profile": "",
+	 "vpc_id": "vpc-8eb6d1ea",
+     "subnet_id": "subnet-5e0ee606",
+     "security_group_ids": "",
+	 "user_data_file":"../scripts/SetUpWinRM.ps1",
+     "communicator": "winrm",
+     "winrm_username": "Administrator",
+     "winrm_insecure": true,
+     "winrm_use_ssl": true 
+}],
+"provisioners": [
+	{
+		"type": "powershell",
+		"scripts": ["../scripts/SetUpDevTools.ps1"]
+	},
+	{
+		"type": "windows-restart",
+		"restart_check_command": "powershell -command \"& {Write-Output 'restarted.'}\""
+	},
+	{
+		"type": "powershell",
+		"scripts":[	"../scripts/SetAdminPassword.ps1"]
+	}
+ ]}

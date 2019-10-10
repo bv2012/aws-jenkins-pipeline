@@ -1,0 +1,80 @@
+{
+  "variables": {
+    "Docker_Version": "18.03.1.ce",
+    "destination_ami_name": "CENTOS7-JENKINS-LINUX-E123DD-MASTER",
+    "source_ami_name": "CENTOS7-DOCKER_HOST-F8369D-MASTER-*",
+    "ssh_key_file": ""
+  },
+  "builders": [
+    {
+      "ami_name": "{{user `destination_ami_name`}}-{{isotime \"20060102\"}}",
+      "ami_description": "Linux Based on AMI - {{ .SourceAMIName }} - ({{ .SourceAMI }})",
+      "tags": {
+        "Name": "{{user `destination_ami_name`}}-{{isotime \"20060102\"}}",
+        "FTI_PROJECT": "Ringtail Builds",
+        "Purpose": "Ringtail Builds"
+      },
+      "source_ami_filter": {
+        "filters": {
+          "name": "{{user `source_ami_name`}}",
+          "root-device-type": "ebs"
+        },
+        "owners": [
+          "self"
+        ],
+        "most_recent": true
+      },
+      "run_tags": {
+        "Name": "Packer Build - {{user `destination_ami_name`}}",
+        "FTI_PROJECT": "Ringtail Builds",
+        "Purpose": "Ringtail Builds"
+
+      },
+      "run_volume_tags": {
+        "Name": "Packer Build - {{user `destination_ami_name`}}",
+        "FTI_PROJECT": "Ringtail Builds",
+        "Purpose": "Ringtail Builds"
+      },
+      "region": "us-east-1",
+      "launch_block_device_mappings": [
+        {
+          "device_name": "/dev/sda1",
+          "volume_size": 200,
+          "volume_type": "gp2",
+          "delete_on_termination": true
+        }
+      ],
+      "name": "",
+      "profile": "",
+      "type": "amazon-ebs",
+      "force_deregister": true,
+      "force_delete_snapshot": true,
+      "instance_type": "t3.medium",
+      "iam_instance_profile": "supervisor-autoscale-profile",
+      "encrypt_boot": true,
+      "kms_key_id": "",
+      "ssh_username": "centos",
+      "ssh_keypair_name": "",
+      "ssh_private_key_file": "",
+      "ssh_pty": true,
+      "subnet_id": "subnet-5e0ee606",
+      "security_group_ids": "",
+      "ena_support": true
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "script": "./build-prereqs.sh",
+      "environment_vars": [
+        "DOCKER_VERSION={{user `Docker_Version`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "execute_command": "chmod +x {{ .Path }}; sudo {{ .Vars }} {{ .Path }}",
+      "script": "./InterfaceCleanup.sh",
+      "environment_vars": []
+    }
+  ]
+}
